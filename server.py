@@ -1,7 +1,7 @@
-from mcp.server.fastmcp import FastMCP
+from fastapi import FastAPI
 import psycopg2
 
-mcp = FastMCP("postgres-agent")
+app = FastAPI()
 
 def get_connection():
     return psycopg2.connect(
@@ -13,32 +13,17 @@ def get_connection():
         sslmode="require"
     )
 
-@mcp.tool()
-def list_tables():
+@app.get("/")
+def home():
+    return {"message": "Azure App Running"}
+
+@app.get("/employees")
+def employees():
 
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema='public'
-    """)
-
-    rows = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return [row[0] for row in rows]
-
-@mcp.tool()
-def run_query(query: str):
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(query)
+    cur.execute("SELECT * FROM employees")
 
     rows = cur.fetchall()
 
@@ -53,6 +38,3 @@ def run_query(query: str):
     conn.close()
 
     return result
-
-if __name__ == "__main__":
-    mcp.run()
