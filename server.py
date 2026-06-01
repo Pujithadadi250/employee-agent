@@ -14,27 +14,28 @@ def get_connection():
     )
 
 @app.get("/")
-def home():
-    return {"message": "Azure App Running"}
+def root():
+    return {"message": "MCP Server Running"}
 
-@app.get("/employees")
-def employees():
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/tables")
+def list_tables():
 
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM employees")
+    cur.execute("""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema='public'
+    """)
 
     rows = cur.fetchall()
-
-    columns = [desc[0] for desc in cur.description]
-
-    result = []
-
-    for row in rows:
-        result.append(dict(zip(columns, row)))
 
     cur.close()
     conn.close()
 
-    return result
+    return [row[0] for row in rows]
